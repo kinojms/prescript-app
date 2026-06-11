@@ -1,4 +1,5 @@
 # The Index
+![Uploading image.png…]()
 
 A focused React + Vite Progressive Web App for The Index, with native-like installability and offline-ready behavior.
 
