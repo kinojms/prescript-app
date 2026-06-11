@@ -1,5 +1,5 @@
 # The Index
-![Uploading image.png…]()
+<img width="1908" height="907" alt="image" src="https://github.com/user-attachments/assets/045db080-b666-49ad-99cd-206c9f32fc1d" />
 
 A focused React + Vite Progressive Web App for The Index, with native-like installability and offline-ready behavior.
 
