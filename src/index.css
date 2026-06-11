@@ -1,0 +1,138 @@
+@import "tailwindcss";
+
+/* Class-based dark mode: `dark:` utilities apply when an ancestor (or the element
+   itself) has the `.dark` class. Tailwind v4 has no `darkMode: 'class'` config key —
+   this @custom-variant is the v4 CSS-first idiom. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --hermes-base: #f3f1eb;
+  --hermes-accent: #86bada;
+  --hermes-black: #000000;
+  --hermes-bg: var(--hermes-base);
+  --hermes-surface: #f3f1eb;
+  --hermes-panel: #e9e7e2;
+  --hermes-border: #86bada;
+  --hermes-text: #1f2d35;
+  --hermes-muted: #4b6878;
+  --hermes-success: #3f7a5b;
+  --hermes-danger: #8a4545;
+  --hermes-surface-rgb: 243 241 235;
+  --hermes-panel-rgb: 233 231 226;
+  --hermes-bg-rgb: 243 241 235;
+}
+
+.dark {
+  --hermes-bg: var(--hermes-black);
+  --hermes-surface: var(--hermes-black);
+  --hermes-panel: var(--hermes-black);
+  --hermes-border: var(--hermes-accent);
+  --hermes-text: var(--hermes-accent);
+  --hermes-muted: #5f8aa4;
+  --hermes-success: var(--hermes-accent);
+  --hermes-danger: #9dc7df;
+  --hermes-surface-rgb: 0 0 0;
+  --hermes-panel-rgb: 0 0 0;
+  --hermes-bg-rgb: 0 0 0;
+}
+
+html,
+body {
+  background-color: var(--hermes-base);
+  font-family: 'Pixelify Sans', 'Courier New', monospace;
+}
+
+.dark,
+.dark body {
+  background-color: var(--hermes-black);
+}
+
+@layer utilities {
+  .hermes-bg {
+    background-color: rgb(var(--hermes-bg-rgb) / 0.7);
+  }
+  .hermes-surface {
+    background-color: rgb(var(--hermes-surface-rgb) / 0.84);
+  }
+  .hermes-panel {
+    background-color: rgb(var(--hermes-panel-rgb) / 0.8);
+  }
+  .hermes-border {
+    border-color: var(--hermes-border);
+  }
+  .hermes-text {
+    color: var(--hermes-text);
+  }
+  .hermes-muted {
+    color: var(--hermes-muted);
+  }
+  .hermes-accent {
+    color: var(--hermes-accent);
+  }
+  .hermes-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(134 186 218 / 0.75) rgb(134 186 218 / 0.2);
+  }
+  .hermes-scrollbar::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  .hermes-scrollbar::-webkit-scrollbar-track {
+    background: rgb(134 186 218 / 0.16);
+    border-radius: 9999px;
+  }
+  .hermes-scrollbar::-webkit-scrollbar-thumb {
+    background: rgb(134 186 218 / 0.72);
+    border-radius: 9999px;
+    border: 2px solid rgb(0 0 0 / 0);
+    background-clip: padding-box;
+  }
+  .hermes-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgb(134 186 218 / 0.9);
+  }
+}
+
+/* Prescript-entry animation — registered as a Tailwind v4 theme token so the
+   `animate-prescript-in` utility class is available to components. */
+@theme {
+  --font-sans: 'Pixelify Sans', 'Courier New', monospace;
+  --font-mono: 'Pixelify Sans', 'Courier New', monospace;
+  --animate-prescript-in: prescript-in 0.3s ease-out both;
+}
+
+@keyframes prescript-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes initiation-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes initiation-fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Shorten fade durations to a minimal flash so all three elements still
+     appear and the 2.5s interactivity gate still runs (US-1.6, US-2.7, US-3.7). */
+  :root {
+    --initiation-fade-duration: 0.08s;
+  }
+}
