@@ -74,8 +74,8 @@ function advanceThroughInitiation() {
   // Click the cipher button
   const btn = screen.getByRole('button', { name: /click to join the index/i })
   act(() => { fireEvent.click(btn) })
-  // Advance through the fade-out timeout (700ms) and any remaining timers
-  act(() => { vi.runAllTimers() })
+  // Advance past fade-out timeout without draining perpetual shuffle intervals.
+  act(() => { vi.advanceTimersByTime(1200) })
 }
 
 // ---------------------------------------------------------------------------

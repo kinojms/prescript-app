@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { DEFAULT_PRESCRIPTS } from './defaultPrescripts.js'
 
-const VALID_DIFFICULTIES = new Set(['Easy', 'Hard'])
+const VALID_DIFFICULTIES = new Set(['Easy', 'Medium', 'Hard'])
 
 describe('DEFAULT_PRESCRIPTS', () => {
   // --- Count / shape ---
@@ -9,9 +9,8 @@ describe('DEFAULT_PRESCRIPTS', () => {
     expect(Array.isArray(DEFAULT_PRESCRIPTS)).toBe(true)
   })
 
-  it('contains between 10 and 15 entries', () => {
-    expect(DEFAULT_PRESCRIPTS.length).toBeGreaterThanOrEqual(10)
-    expect(DEFAULT_PRESCRIPTS.length).toBeLessThanOrEqual(15)
+  it('contains at least 15 entries', () => {
+    expect(DEFAULT_PRESCRIPTS.length).toBeGreaterThanOrEqual(15)
   })
 
   it('is frozen (immutable)', () => {
@@ -52,10 +51,25 @@ describe('DEFAULT_PRESCRIPTS', () => {
     }
   })
 
-  it('every difficulty is either "Easy" or "Hard"', () => {
+  it('every difficulty is Easy, Medium, or Hard', () => {
     for (const p of DEFAULT_PRESCRIPTS) {
       expect(VALID_DIFFICULTIES.has(p.difficulty)).toBe(true)
     }
+  })
+
+  it('contains required canonical directives verbatim', () => {
+    const texts = new Set(DEFAULT_PRESCRIPTS.map((p) => p.text))
+    expect(texts.has('Stare blankly at the ceiling for exactly 60 seconds.')).toBe(true)
+    expect(texts.has('Perform a full-body standing stretch for 1 minute.')).toBe(true)
+    expect(texts.has('Consume a full glass of clear water immediately.')).toBe(true)
+    expect(texts.has('Drop and execute 5 disciplined push-ups.')).toBe(true)
+    expect(texts.has('Read a news article to observe the status of the City.')).toBe(true)
+    expect(texts.has('Cook a proper meal for your evening sustenance.')).toBe(true)
+    expect(texts.has('Conclude your next bathroom visit without utilizing toilet paper.')).toBe(true)
+    expect(texts.has('Sustain yourself strictly on white rice for your next meal.')).toBe(true)
+    expect(texts.has('Abstain entirely from using AI assistance or language models for the next 4 hours.')).toBe(true)
+    expect(texts.has('Maintain perfect balance on one foot for 5 consecutive minutes.')).toBe(true)
+    expect(texts.has('Recite the alphabet completely in reverse, scattered randomly into your next human conversation without allowing an interruption.')).toBe(true)
   })
 
   // --- Uniqueness ---

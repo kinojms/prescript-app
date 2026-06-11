@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest'
-import { render, screen, cleanup, waitFor } from '@testing-library/react'
+import { render, screen, cleanup, waitFor, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import SettingsDrawer from './SettingsDrawer.jsx'
 
@@ -19,12 +19,14 @@ function renderDrawer(props = {}) {
     settings: {
       mode: 'dark',
       muted: false,
+      sfxVolume: 1,
       useDefault: true,
       useCustom: true,
       theme: 'default',
     },
     setMode: vi.fn(),
     setMuted: vi.fn(),
+    setSfxVolume: vi.fn(),
     setSources: vi.fn(),
     customPrescripts: [{ id: 'c1', text: 'Hydrate', difficulty: 'Easy' }],
     addCustomPrescript: vi.fn(),
@@ -65,6 +67,16 @@ describe('SettingsDrawer', () => {
     expect(props.addCustomPrescript).toHaveBeenCalledWith('  Stretch  ', 'Hard')
   })
 
+  it('supports Medium custom prescript difficulty', async () => {
+    const { props } = renderDrawer({ customPrescripts: [] })
+
+    await userEvent.type(screen.getByPlaceholderText(/add custom directive/i), ' Patrol ')
+    await userEvent.selectOptions(screen.getByLabelText(/custom prescript difficulty/i), 'Medium')
+    await userEvent.click(screen.getByRole('button', { name: /^add$/i }))
+
+    expect(props.addCustomPrescript).toHaveBeenCalledWith(' Patrol ', 'Medium')
+  })
+
   it('requires inline confirmation before deleting custom prescript', async () => {
     const { props } = renderDrawer()
 
@@ -87,6 +99,7 @@ describe('SettingsDrawer', () => {
       settings: {
         mode: 'dark',
         muted: false,
+        sfxVolume: 1,
         useDefault: true,
         useCustom: false,
         theme: 'default',
@@ -113,6 +126,14 @@ describe('SettingsDrawer', () => {
       expect(props.importBackup).toHaveBeenCalledTimes(1)
       expect(screen.getByRole('status').textContent).toMatch(/restored successfully/i)
     })
+  })
+
+  it('SFX volume slider calls setSfxVolume with normalized value', async () => {
+    const { props } = renderDrawer()
+    const slider = screen.getByLabelText(/sfx volume/i)
+
+    fireEvent.change(slider, { target: { value: '55' } })
+    expect(props.setSfxVolume).toHaveBeenCalledWith(0.55)
   })
 
   it('shows no-file message when restore is clicked without selecting a file', async () => {

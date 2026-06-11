@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useAppState } from './hooks/useAppState.js'
 import CipherBackground from './components/CipherBackground.jsx'
 import HermesShell from './components/HermesShell.jsx'
@@ -9,6 +9,7 @@ import SettingsDrawer from './components/SettingsDrawer.jsx'
 
 function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+  const [showTransitionShield, setShowTransitionShield] = useState(true)
   const bgmRef = useRef(null)
   const bgmFadeRef = useRef(null)
   const bgmFadeOutRef = useRef(null)
@@ -24,10 +25,17 @@ function App() {
     activePrescript,
     execute,
     diverge,
+    timeoutSignal,
+    concludeDay,
+    lastEvaluation,
+    liveDistortion,
+    distortionOpacity,
+    distortionGlitchSignal,
     history,
     settings,
     setMode,
     setMuted,
+    setSfxVolume,
     setBgmMuted,
     setBgmVolume,
     setSources,
@@ -38,7 +46,7 @@ function App() {
     importBackup,
   } = useAppState()
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     document.documentElement.classList.toggle('dark', settings.mode === 'dark')
   }, [settings.mode])
 
@@ -208,14 +216,37 @@ function App() {
     typeof window.matchMedia === 'function' &&
     window.matchMedia('(prefers-reduced-motion: reduce)').matches
   const appFadeDuration = reducedMotion ? '0.08s' : '0.6s'
+  const transitionShieldDurationMs = reducedMotion ? 80 : 700
+
+  useEffect(() => {
+    const id = setTimeout(() => setShowTransitionShield(false), transitionShieldDurationMs)
+    return () => clearTimeout(id)
+  }, [transitionShieldDurationMs])
 
   return (
-    <div
-      className="app-mount"
-      style={{ animation: `initiation-fade-in ${appFadeDuration} ease-out both` }}
-    >
-      <CipherBackground />
-      <HermesShell>
+    <>
+      {showTransitionShield && (
+        <div
+          aria-hidden="true"
+          className="fixed inset-0 z-[70] pointer-events-none"
+          style={{
+            backgroundColor: '#000000',
+            animation: `initiation-fade-out ${appFadeDuration} ease-out both`,
+          }}
+        />
+      )}
+      <div
+        className="app-mount"
+        style={{
+          animation: `initiation-fade-in ${appFadeDuration} ease-out both`,
+          backgroundColor: settings.mode === 'dark' ? '#000000' : 'var(--hermes-base)',
+        }}
+      >
+        <CipherBackground
+          distortionOpacity={distortionOpacity}
+          distortionGlitchSignal={distortionGlitchSignal}
+        />
+        <HermesShell>
         <RankHeader
           rank={currentRank}
           trust={accumulatedTrust}
@@ -230,26 +261,35 @@ function App() {
           onExecute={execute}
           onDiverge={diverge}
           muted={settings.muted}
+          sfxVolume={settings.sfxVolume}
+          timeoutSignal={timeoutSignal}
         />
-        <RecordPanel history={history} />
-      </HermesShell>
+        <RecordPanel
+          history={history}
+          onConcludeDay={() => concludeDay('manual')}
+          evaluation={lastEvaluation}
+          liveDistortion={liveDistortion}
+        />
+        </HermesShell>
 
-      <SettingsDrawer
-        open={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
-        settings={settings}
-        setMode={setMode}
-        setMuted={setMuted}
-        setBgmMuted={setBgmMuted}
-        setBgmVolume={setBgmVolume}
-        setSources={setSources}
-        customPrescripts={customPrescripts}
-        addCustomPrescript={addCustomPrescript}
-        deleteCustomPrescript={deleteCustomPrescript}
-        exportBackup={exportBackup}
-        importBackup={importBackup}
-      />
-    </div>
+        <SettingsDrawer
+          open={isSettingsOpen}
+          onClose={() => setIsSettingsOpen(false)}
+          settings={settings}
+          setMode={setMode}
+          setMuted={setMuted}
+          setSfxVolume={setSfxVolume}
+          setBgmMuted={setBgmMuted}
+          setBgmVolume={setBgmVolume}
+          setSources={setSources}
+          customPrescripts={customPrescripts}
+          addCustomPrescript={addCustomPrescript}
+          deleteCustomPrescript={deleteCustomPrescript}
+          exportBackup={exportBackup}
+          importBackup={importBackup}
+        />
+      </div>
+    </>
   )
 }
 

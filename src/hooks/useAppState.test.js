@@ -115,6 +115,32 @@ describe('useAppState - set-settings reducer: setMuted', () => {
   })
 })
 
+describe('useAppState - set-settings reducer: setSfxVolume', () => {
+  it('setSfxVolume(0.25) changes settings.sfxVolume', () => {
+    const { result } = renderAppState()
+
+    act(() => {
+      result.current.setSfxVolume(0.25)
+    })
+
+    expect(result.current.settings.sfxVolume).toBe(0.25)
+  })
+
+  it('setSfxVolume clamps out-of-range values', () => {
+    const { result } = renderAppState()
+
+    act(() => {
+      result.current.setSfxVolume(2)
+    })
+    expect(result.current.settings.sfxVolume).toBe(1)
+
+    act(() => {
+      result.current.setSfxVolume(-1)
+    })
+    expect(result.current.settings.sfxVolume).toBe(0)
+  })
+})
+
 describe('useAppState - settings merge correctness', () => {
   it('chaining setMode then setMuted preserves both changes', () => {
     const { result } = renderAppState()
@@ -154,6 +180,7 @@ describe('useAppState - settings merge correctness', () => {
     const s = result.current.settings
     expect(s).toHaveProperty('mode')
     expect(s).toHaveProperty('muted')
+    expect(s).toHaveProperty('sfxVolume')
     expect(s).toHaveProperty('useDefault')
     expect(s).toHaveProperty('useCustom')
     expect(s).toHaveProperty('theme')
@@ -196,6 +223,16 @@ describe('useAppState - custom prescript CRUD', () => {
     expect(result.current.customPrescripts[0].difficulty).toBe('Easy')
   })
 
+  it('addCustomPrescript keeps Medium difficulty when provided', () => {
+    const { result } = renderAppState()
+
+    act(() => {
+      result.current.addCustomPrescript('Inspect the perimeter', 'Medium')
+    })
+
+    expect(result.current.customPrescripts[0].difficulty).toBe('Medium')
+  })
+
   it('deleteCustomPrescript removes by id and unknown id is a no-op', () => {
     const { result } = renderAppState()
 
@@ -228,6 +265,57 @@ describe('useAppState - custom prescript CRUD', () => {
   })
 })
 
+describe('useAppState - execute trust payouts by difficulty', () => {
+  function seedSinglePrescript(difficulty) {
+    store[STORAGE_KEYS.settings] = JSON.stringify({
+      mode: 'dark',
+      muted: false,
+      sfxVolume: 0.3,
+      bgmMuted: false,
+      bgmVolume: 0.3,
+      useDefault: false,
+      useCustom: true,
+      theme: 'default',
+    })
+    store[STORAGE_KEYS.custom] = JSON.stringify([
+      { id: `custom-${difficulty}`, text: `Directive ${difficulty}`, difficulty },
+    ])
+  }
+
+  it('awards 1 trust for Easy execute', () => {
+    seedSinglePrescript('Easy')
+    const { result } = renderAppState()
+
+    act(() => {
+      result.current.execute()
+    })
+
+    expect(result.current.accumulatedTrust).toBe(1)
+  })
+
+  it('awards 5 trust for Medium execute', () => {
+    seedSinglePrescript('Medium')
+    const { result } = renderAppState()
+
+    act(() => {
+      result.current.execute()
+    })
+
+    expect(result.current.accumulatedTrust).toBe(5)
+  })
+
+  it('awards 10 trust for Hard execute', () => {
+    seedSinglePrescript('Hard')
+    const { result } = renderAppState()
+
+    act(() => {
+      result.current.execute()
+    })
+
+    expect(result.current.accumulatedTrust).toBe(10)
+  })
+})
+
 describe('useAppState - source toggles', () => {
   it('setSources updates both settings flags', () => {
     const { result } = renderAppState()
@@ -253,19 +341,19 @@ describe('useAppState - source toggles', () => {
 })
 
 describe('useAppState - daily prescript cap', () => {
-  it('caps daily actions at 10 total entries', () => {
+  it('caps daily actions at 20 total entries', () => {
     const { result } = renderAppState()
     const nowSpy = vi.spyOn(Date, 'now')
     const base = new Date('2026-06-11T08:00:00.000Z').getTime()
 
-    for (let i = 0; i < 12; i++) {
+    for (let i = 0; i < 22; i++) {
       nowSpy.mockReturnValue(base + (i * 1000))
       act(() => {
         result.current.execute()
       })
     }
 
-    expect(result.current.history).toHaveLength(10)
+    expect(result.current.history).toHaveLength(20)
     nowSpy.mockRestore()
   })
 
@@ -275,7 +363,7 @@ describe('useAppState - daily prescript cap', () => {
     const day1 = new Date('2026-06-11T23:50:00.000Z').getTime()
     const day2 = day1 + (48 * 60 * 60 * 1000)
 
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 20; i++) {
       nowSpy.mockReturnValue(day1 + (i * 1000))
       act(() => {
         result.current.execute()
@@ -285,14 +373,60 @@ describe('useAppState - daily prescript cap', () => {
     act(() => {
       result.current.execute()
     })
-    expect(result.current.history).toHaveLength(10)
+    expect(result.current.history).toHaveLength(20)
 
     nowSpy.mockReturnValue(day2)
     act(() => {
       result.current.execute()
     })
-    expect(result.current.history).toHaveLength(11)
+    expect(result.current.history).toHaveLength(21)
     nowSpy.mockRestore()
+  })
+})
+
+describe('useAppState - time-sensitive timeout behavior', () => {
+  it('auto-diverges timed directives and applies -5 trust penalty on expiry', () => {
+    vi.useFakeTimers()
+    try {
+      vi.setSystemTime(new Date('2026-06-11T00:00:00.000Z'))
+
+      store[STORAGE_KEYS.trust] = JSON.stringify(20)
+      store[STORAGE_KEYS.settings] = JSON.stringify({
+        mode: 'dark',
+        muted: false,
+        sfxVolume: 0.3,
+        bgmMuted: false,
+        bgmVolume: 0.3,
+        useDefault: false,
+        useCustom: true,
+        theme: 'default',
+      })
+      store[STORAGE_KEYS.custom] = JSON.stringify([
+        { id: 'custom-medium', text: 'Timed medium directive', difficulty: 'Medium' },
+      ])
+
+      const randomSpy = vi.spyOn(Math, 'random')
+        .mockReturnValueOnce(0.2) // weighted difficulty roll
+        .mockReturnValueOnce(0.0) // final pool pick
+        .mockReturnValueOnce(0.1) // mark as time-sensitive
+        .mockReturnValueOnce(0.0) // choose 30m duration
+        .mockReturnValue(0.9) // subsequent picks can be non-timed
+
+      const { result } = renderAppState()
+
+      act(() => {
+        vi.advanceTimersByTime(30 * 60 * 1000 + 1)
+      })
+
+      expect(result.current.accumulatedTrust).toBe(15)
+      expect(result.current.history[0].outcome).toBe('fail')
+      expect(result.current.history[0].timeout).toBe(true)
+      expect(result.current.timeoutSignal).toBeGreaterThan(0)
+
+      randomSpy.mockRestore()
+    } finally {
+      vi.useRealTimers()
+    }
   })
 })
 
@@ -410,5 +544,197 @@ describe('useAppState - backup export/import', () => {
     })
 
     expect(response).toEqual({ ok: false, error: 'No file selected.' })
+  })
+})
+
+describe('useAppState - daily evaluation and conclude day', () => {
+  it('live distortion warning activates at the 5th rejected prescript', () => {
+    const day = new Date('2026-06-11T12:00:00.000Z').getTime()
+    const failEntries = Array.from({ length: 5 }, (_, i) => ({
+      id: `lf${i}`,
+      prescriptId: `lp${i}`,
+      text: `Live Fail ${i}`,
+      difficulty: 'Hard',
+      outcome: 'fail',
+      timestamp: day,
+    }))
+    store[STORAGE_KEYS.history] = JSON.stringify(failEntries)
+
+    const { result } = renderAppState()
+
+    expect(result.current.liveDistortion.active).toBe(true)
+    expect(result.current.liveDistortion.failCount).toBe(5)
+    expect(result.current.liveDistortion.opacity).toBe(0.3)
+  })
+
+  it('live distortion opacity increases as rejects continue beyond five', () => {
+    const day = new Date('2026-06-11T12:00:00.000Z').getTime()
+    const failEntries = Array.from({ length: 7 }, (_, i) => ({
+      id: `lfa${i}`,
+      prescriptId: `lpa${i}`,
+      text: `Live Fail ${i}`,
+      difficulty: 'Hard',
+      outcome: 'fail',
+      timestamp: day,
+    }))
+    store[STORAGE_KEYS.history] = JSON.stringify(failEntries)
+
+    const { result } = renderAppState()
+
+    expect(result.current.liveDistortion.active).toBe(true)
+    expect(result.current.liveDistortion.failCount).toBe(7)
+    expect(result.current.liveDistortion.opacity).toBe(0.5)
+  })
+
+  it('emits a glitch signal when crossing to the 5th reject', () => {
+    const nowSpy = vi.spyOn(Date, 'now')
+    const base = new Date('2026-06-11T08:00:00.000Z').getTime()
+    nowSpy.mockReturnValue(base)
+
+    store[STORAGE_KEYS.history] = JSON.stringify([
+      { id: 'f1', prescriptId: 'p1', text: 'a', difficulty: 'Hard', outcome: 'fail', timestamp: base - 4000 },
+      { id: 'f2', prescriptId: 'p2', text: 'b', difficulty: 'Hard', outcome: 'fail', timestamp: base - 3000 },
+      { id: 'f3', prescriptId: 'p3', text: 'c', difficulty: 'Hard', outcome: 'fail', timestamp: base - 2000 },
+      { id: 'f4', prescriptId: 'p4', text: 'd', difficulty: 'Hard', outcome: 'fail', timestamp: base - 1000 },
+    ])
+    store[STORAGE_KEYS.settings] = JSON.stringify({
+      mode: 'dark',
+      muted: false,
+      sfxVolume: 0.3,
+      bgmMuted: false,
+      bgmVolume: 0.3,
+      useDefault: false,
+      useCustom: true,
+      theme: 'default',
+    })
+    store[STORAGE_KEYS.custom] = JSON.stringify([
+      { id: 'c-fail', text: 'Reject me', difficulty: 'Hard' },
+    ])
+
+    const randomSpy = vi.spyOn(Math, 'random').mockReturnValue(0)
+    const { result } = renderAppState()
+
+    expect(result.current.distortionGlitchSignal).toBe(0)
+    act(() => {
+      result.current.diverge()
+    })
+    expect(result.current.liveDistortion.failCount).toBe(5)
+    expect(result.current.distortionGlitchSignal).toBe(base)
+
+    randomSpy.mockRestore()
+    nowSpy.mockRestore()
+  })
+
+  it('emits a glitch signal on each reject after the 5th reject', () => {
+    const nowSpy = vi.spyOn(Date, 'now')
+    const base = new Date('2026-06-11T09:00:00.000Z').getTime()
+    nowSpy.mockReturnValue(base)
+
+    store[STORAGE_KEYS.history] = JSON.stringify([
+      { id: 'f1', prescriptId: 'p1', text: 'a', difficulty: 'Hard', outcome: 'fail', timestamp: base - 5000 },
+      { id: 'f2', prescriptId: 'p2', text: 'b', difficulty: 'Hard', outcome: 'fail', timestamp: base - 4000 },
+      { id: 'f3', prescriptId: 'p3', text: 'c', difficulty: 'Hard', outcome: 'fail', timestamp: base - 3000 },
+      { id: 'f4', prescriptId: 'p4', text: 'd', difficulty: 'Hard', outcome: 'fail', timestamp: base - 2000 },
+      { id: 'f5', prescriptId: 'p5', text: 'e', difficulty: 'Hard', outcome: 'fail', timestamp: base - 1000 },
+    ])
+    store[STORAGE_KEYS.settings] = JSON.stringify({
+      mode: 'dark',
+      muted: false,
+      sfxVolume: 0.3,
+      bgmMuted: false,
+      bgmVolume: 0.3,
+      useDefault: false,
+      useCustom: true,
+      theme: 'default',
+    })
+    store[STORAGE_KEYS.custom] = JSON.stringify([
+      { id: 'c-fail-plus', text: 'Reject me again', difficulty: 'Hard' },
+    ])
+
+    const randomSpy = vi.spyOn(Math, 'random').mockReturnValue(0)
+    const { result } = renderAppState()
+
+    expect(result.current.liveDistortion.failCount).toBe(5)
+    expect(result.current.distortionGlitchSignal).toBe(0)
+
+    nowSpy.mockReturnValue(base + 1000)
+    act(() => {
+      result.current.diverge()
+    })
+
+    expect(result.current.liveDistortion.failCount).toBe(6)
+    expect(result.current.liveDistortion.opacity).toBe(0.4)
+    expect(result.current.distortionGlitchSignal).toBe(base + 1000)
+
+    randomSpy.mockRestore()
+    nowSpy.mockRestore()
+  })
+
+  it('concludeDay clears the Record of Orders and preserves trust/custom prescripts', () => {
+    const day = new Date('2026-06-11T12:00:00.000Z').getTime()
+    const previousDay = new Date('2026-06-10T12:00:00.000Z').getTime()
+
+    store[STORAGE_KEYS.trust] = JSON.stringify(42)
+    store[STORAGE_KEYS.history] = JSON.stringify([
+      { id: 'd1', prescriptId: 'p1', text: 'A', difficulty: 'Easy', outcome: 'success', timestamp: day },
+      { id: 'd2', prescriptId: 'p2', text: 'B', difficulty: 'Medium', outcome: 'fail', timestamp: day },
+      { id: 'y1', prescriptId: 'p3', text: 'Y', difficulty: 'Hard', outcome: 'success', timestamp: previousDay },
+    ])
+    store[STORAGE_KEYS.custom] = JSON.stringify([
+      { id: 'c1', text: 'Keep me', difficulty: 'Medium' },
+    ])
+
+    const { result } = renderAppState()
+
+    act(() => {
+      result.current.concludeDay('manual', day)
+    })
+
+    expect(result.current.history).toHaveLength(0)
+    expect(result.current.accumulatedTrust).toBe(42)
+    expect(result.current.customPrescripts).toHaveLength(1)
+    expect(result.current.lastEvaluation.status).toBe('distorting')
+    expect(result.current.distortionOpacity).toBe(0)
+    expect(result.current.liveDistortion.active).toBe(false)
+    expect(result.current.distortionGlitchSignal).toBeGreaterThan(0)
+  })
+
+  it('concludeDay resets distortion opacity even after heavy failure count', () => {
+    const day = new Date('2026-06-11T12:00:00.000Z').getTime()
+    const failEntries = Array.from({ length: 6 }, (_, i) => ({
+      id: `f${i}`,
+      prescriptId: `p${i}`,
+      text: `Fail ${i}`,
+      difficulty: 'Hard',
+      outcome: 'fail',
+      timestamp: day,
+    }))
+    store[STORAGE_KEYS.history] = JSON.stringify(failEntries)
+
+    const { result } = renderAppState()
+
+    act(() => {
+      result.current.concludeDay('manual', day)
+    })
+
+    expect(result.current.lastEvaluation.status).toBe('distorting')
+    expect(result.current.distortionOpacity).toBe(0)
+  })
+
+  it('concludeDay does not emit a glitch signal for non-distorting outcomes', () => {
+    const day = new Date('2026-06-11T12:00:00.000Z').getTime()
+    store[STORAGE_KEYS.history] = JSON.stringify([
+      { id: 's1', prescriptId: 'p1', text: 'A', difficulty: 'Easy', outcome: 'success', timestamp: day },
+      { id: 's2', prescriptId: 'p2', text: 'B', difficulty: 'Medium', outcome: 'success', timestamp: day },
+    ])
+
+    const { result } = renderAppState()
+
+    act(() => {
+      result.current.concludeDay('manual', day)
+    })
+
+    expect(result.current.lastEvaluation.status).toBe('flawless')
+    expect(result.current.distortionGlitchSignal).toBe(0)
   })
 })

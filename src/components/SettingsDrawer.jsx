@@ -6,6 +6,7 @@ export default function SettingsDrawer({
   settings,
   setMode,
   setMuted,
+  setSfxVolume,
   setBgmMuted,
   setBgmVolume,
   setSources,
@@ -33,6 +34,7 @@ export default function SettingsDrawer({
 
   const modeLabel = settings.mode === 'dark' ? 'Switch To Light' : 'Switch To Dark'
   const muteLabel = settings.muted ? 'Unmute Audio' : 'Mute Audio'
+  const sfxVolume = Number.isFinite(settings.sfxVolume) ? settings.sfxVolume : 1
   const bgmMuted = !!settings.bgmMuted
   const bgmVolume = Number.isFinite(settings.bgmVolume) ? settings.bgmVolume : 0.3
 
@@ -80,18 +82,18 @@ export default function SettingsDrawer({
         role="dialog"
         aria-modal="true"
         aria-label="Prescript directives settings"
-        className={`absolute bottom-0 left-0 right-0 max-h-[90dvh] overflow-y-auto border-t border-stone-300 dark:border-zinc-700 bg-stone-100/95 dark:bg-zinc-950/95 p-4 transition-transform duration-300 md:top-0 md:bottom-0 md:left-auto md:w-[28rem] md:max-w-[100vw] md:border-l md:border-t-0 ${
+        className={`hermes-settings absolute bottom-0 left-0 right-0 max-h-[90dvh] overflow-y-auto border-t hermes-border hermes-surface hermes-text p-4 transition-transform duration-300 md:top-0 md:bottom-0 md:left-auto md:w-[28rem] md:max-w-[100vw] md:border-l md:border-t-0 ${
           open ? 'translate-y-0 md:translate-x-0' : 'translate-y-full md:translate-x-full md:translate-y-0'
         }`}
       >
-        <div className="flex items-center justify-between gap-2 border-b border-stone-300 dark:border-zinc-700 pb-3">
-          <h2 className="font-mono text-xs uppercase tracking-widest text-stone-700 dark:text-stone-300">
+        <div className="flex items-center justify-between gap-2 border-b hermes-border pb-3">
+          <h2 className="font-mono text-xs uppercase tracking-widest hermes-text">
             Prescript Directives
           </h2>
           <button
             type="button"
             onClick={onClose}
-            className="min-h-11 min-w-11 rounded border border-stone-300 dark:border-zinc-700 bg-stone-200/80 dark:bg-zinc-900/80 font-mono text-xs uppercase tracking-widest"
+            className="min-h-11 min-w-11 rounded border hermes-border bg-[rgb(var(--hermes-panel-rgb)/0.8)] font-mono text-xs uppercase tracking-widest hermes-text"
             aria-label="Close settings"
           >
             Close
@@ -117,6 +119,7 @@ export default function SettingsDrawer({
               aria-label="Custom prescript difficulty"
             >
               <option value="Easy">Easy</option>
+              <option value="Medium">Medium</option>
               <option value="Hard">Hard</option>
             </select>
             <button
@@ -223,6 +226,27 @@ export default function SettingsDrawer({
             >
               {muteLabel}
             </button>
+          </div>
+          <div className="space-y-1">
+            <div className="flex items-center justify-between">
+              <label htmlFor="sfx-volume" className="font-mono text-xs uppercase tracking-widest text-stone-600 dark:text-stone-400">
+                SFX Volume
+              </label>
+              <span className="font-mono text-xs hermes-muted">
+                {Math.round(sfxVolume * 100)}%
+              </span>
+            </div>
+            <input
+              id="sfx-volume"
+              type="range"
+              min="0"
+              max="100"
+              step="1"
+              value={Math.round(sfxVolume * 100)}
+              onChange={(e) => setSfxVolume(Number(e.target.value) / 100)}
+              className="w-full accent-[var(--hermes-accent)]"
+              aria-label="SFX volume"
+            />
           </div>
           <div className="space-y-1">
             <div className="flex items-center justify-between">

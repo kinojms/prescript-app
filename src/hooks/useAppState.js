@@ -1,4 +1,4 @@
-import { useReducer, useEffect } from 'react'
+import { useReducer, useEffect, useRef } from 'react'
 import { STORAGE_KEYS, readKey, writeKey } from '../lib/storage.js'
 import { TRUST_AWARD, calculateRank } from '../lib/rank.js'
 import { getRandomPresc } from '../lib/prescripts.js'
@@ -14,6 +14,7 @@ const DEFAULTS = {
   settings: {
     mode: 'dark',
     muted: false,
+    sfxVolume: 0.3,
     bgmMuted: false,
     bgmVolume: 0.3,
     useDefault: true,
@@ -22,11 +23,109 @@ const DEFAULTS = {
   },
 }
 
-const DAILY_PRESCRIPT_LIMIT = 10
+const DAILY_PRESCRIPT_LIMIT = 20
+const VALID_DIFFICULTIES = new Set(['Easy', 'Medium', 'Hard'])
+const TIME_SENSITIVE_DIFFICULTIES = new Set(['Medium', 'Hard'])
+const TIME_SENSITIVE_DURATIONS_MS = [30 * 60 * 1000, 60 * 60 * 1000]
+const TIME_SENSITIVE_CHANCE = 0.5
+const TIMEOUT_DIVERGE_PENALTY = 5
+const DISTORTION_BASE_FAIL_COUNT = 5
+const DISTORTION_BASE_OPACITY = 0.3
+const DISTORTION_OPACITY_STEP = 0.1
+const DISTORTION_MAX_OPACITY = 0.9
+const LIVE_DISTORTION_WARNING = 'Distortion Warning: Deviation levels critical. The Proxies have been dispatched.'
 
 function dayKey(ts) {
   const d = new Date(ts)
   return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
+}
+
+function pickDeadlineDurationMs() {
+  const index = Math.floor(Math.random() * TIME_SENSITIVE_DURATIONS_MS.length)
+  return TIME_SENSITIVE_DURATIONS_MS[index]
+}
+
+function evaluateDay(entries) {
+  const total = entries.length
+  const executed = entries.filter((entry) => entry.outcome === 'success').length
+  const diverged = entries.filter((entry) => entry.outcome === 'fail').length
+  const ratio = total === 0 ? 0 : executed / total
+
+  if (total > 0 && executed === total) {
+    return {
+      status: 'flawless',
+      message: 'Flawless Execution - The Will is Absolute.',
+      executed,
+      diverged,
+      total,
+      ratio,
+    }
+  }
+
+  if (ratio > 0.5 || total === 0) {
+    return {
+      status: 'stable',
+      message: 'Status: Stable Proselyte/Proxy.',
+      executed,
+      diverged,
+      total,
+      ratio,
+    }
+  }
+
+  return {
+    status: 'distorting',
+    message: 'Distortion Warning: Deviation levels critical. The Proxies have been dispatched.',
+    executed,
+    diverged,
+    total,
+    ratio,
+  }
+}
+
+function computeDistortionOpacity(status, divergedCount) {
+  if (status !== 'distorting') return 0
+  if (divergedCount <= DISTORTION_BASE_FAIL_COUNT) return DISTORTION_BASE_OPACITY
+  const steps = divergedCount - DISTORTION_BASE_FAIL_COUNT
+  return Math.min(DISTORTION_MAX_OPACITY, DISTORTION_BASE_OPACITY + (steps * DISTORTION_OPACITY_STEP))
+}
+
+function countFailedEntriesForDay(history, day) {
+  return history.reduce((count, entry) => {
+    if (dayKey(entry.timestamp) !== day) return count
+    return entry.outcome === 'fail' ? count + 1 : count
+  }, 0)
+}
+
+function decoratePrescript(rawPrescript, now = Date.now()) {
+  if (!rawPrescript) return null
+
+  if (!TIME_SENSITIVE_DIFFICULTIES.has(rawPrescript.difficulty)) {
+    return {
+      ...rawPrescript,
+      timeSensitive: false,
+      deadlineAt: null,
+      deadlineDurationMs: null,
+    }
+  }
+
+  const shouldBeTimed = Math.random() < TIME_SENSITIVE_CHANCE
+  if (!shouldBeTimed) {
+    return {
+      ...rawPrescript,
+      timeSensitive: false,
+      deadlineAt: null,
+      deadlineDurationMs: null,
+    }
+  }
+
+  const deadlineDurationMs = pickDeadlineDurationMs()
+  return {
+    ...rawPrescript,
+    timeSensitive: true,
+    deadlineDurationMs,
+    deadlineAt: now + deadlineDurationMs,
+  }
 }
 
 /**
@@ -61,11 +160,19 @@ function hydrate() {
 function reducer(state, action) {
   switch (action.type) {
     case 'act': {
-      const { outcome, prescript, next, now } = action
+      const { outcome, prescript, next, now, penalty = 0, timeout = false } = action
 
       const award = outcome === 'success' ? (TRUST_AWARD[prescript.difficulty] ?? 0) : 0
-      const trustAfter = state.accumulatedTrust + award
+      const trustAfter = Math.max(0, state.accumulatedTrust + award - penalty)
       const { newRank, newTrust } = calculateRank(trustAfter, state.currentRank)
+      const actionDay = dayKey(now)
+      const previousFailCount = countFailedEntriesForDay(state.history, actionDay)
+      const nextFailCount = outcome === 'fail' ? previousFailCount + 1 : previousFailCount
+      const crossedLiveDistortionThreshold =
+        previousFailCount < DISTORTION_BASE_FAIL_COUNT &&
+        nextFailCount >= DISTORTION_BASE_FAIL_COUNT
+      const shouldGlitchForAdditionalDistortionStep =
+        outcome === 'fail' && previousFailCount >= DISTORTION_BASE_FAIL_COUNT
 
       const entry = {
         id: `${prescript.id}-${now}`,
@@ -74,6 +181,7 @@ function reducer(state, action) {
         difficulty: prescript.difficulty,
         outcome,
         timestamp: now,
+        timeout,
       }
 
       return {
@@ -82,11 +190,21 @@ function reducer(state, action) {
         accumulatedTrust: newTrust,
         history: [entry, ...state.history],
         activePrescript: next,
+        lastTimeoutAt: timeout ? now : state.lastTimeoutAt,
+        lastDistortionGlitchAt:
+          crossedLiveDistortionThreshold || shouldGlitchForAdditionalDistortionStep
+            ? now
+            : state.lastDistortionGlitchAt,
       }
     }
 
     case 'rehydrate': {
-      return { ...state, ...action.data }
+      return {
+        ...state,
+        ...action.data,
+        lastTimeoutAt: state.lastTimeoutAt,
+        lastDistortionGlitchAt: state.lastDistortionGlitchAt,
+      }
     }
 
     case 'set-settings': {
@@ -104,6 +222,24 @@ function reducer(state, action) {
       }
     }
 
+    case 'conclude-day': {
+      const dayEntries = state.history.filter((entry) => dayKey(entry.timestamp) === action.day)
+      const evaluation = evaluateDay(dayEntries)
+      const shouldGlitchOnConclude = evaluation.status === 'distorting'
+      return {
+        ...state,
+        history: [],
+        lastEvaluation: {
+          ...evaluation,
+          day: action.day,
+          source: action.source,
+          timestamp: action.now,
+        },
+        distortionOpacity: 0,
+        lastDistortionGlitchAt: shouldGlitchOnConclude ? action.now : 0,
+      }
+    }
+
     default:
       return state
   }
@@ -118,10 +254,31 @@ export function useAppState() {
       ...(hydrated.settings.useDefault ? DEFAULT_PRESCRIPTS : []),
       ...(hydrated.settings.useCustom ? hydrated.customPrescripts : []),
     ]
-    return { ...hydrated, activePrescript: getRandomPresc(pool, null) }
+    return {
+      ...hydrated,
+      activePrescript: decoratePrescript(getRandomPresc(pool, null, hydrated.currentRank)),
+      lastTimeoutAt: 0,
+      lastDistortionGlitchAt: 0,
+      lastEvaluation: null,
+      distortionOpacity: 0,
+    }
   })
+  const timeoutHandledPrescriptRef = useRef(null)
 
   const { currentRank, accumulatedTrust, history, customPrescripts, settings, activePrescript } = state
+  const today = dayKey(Date.now())
+  const todayFailedCount = countFailedEntriesForDay(history, today)
+  const liveDistorting = todayFailedCount >= DISTORTION_BASE_FAIL_COUNT
+  const liveDistortionOpacity = liveDistorting
+    ? computeDistortionOpacity('distorting', todayFailedCount)
+    : 0
+  const liveDistortion = {
+    active: liveDistorting,
+    failCount: todayFailedCount,
+    message: LIVE_DISTORTION_WARNING,
+    opacity: liveDistortionOpacity,
+  }
+  const effectiveDistortionOpacity = Math.max(state.distortionOpacity, liveDistortionOpacity)
 
   // Derive pool (re-computed on render so it stays current with settings)
   const pool = [
@@ -144,8 +301,14 @@ export function useAppState() {
    * ensures both invocations use the same seed value.
    */
   function act(outcome) {
+    return actWithOptions(outcome)
+  }
+
+  function actWithOptions(outcome, options = {}) {
     const p = activePrescript
     if (!p) return
+    if (options.timeout && !p.timeSensitive) return
+
     const now = Date.now()
     const today = dayKey(now)
     const todayCount = history.reduce((count, entry) => {
@@ -154,20 +317,33 @@ export function useAppState() {
     }, 0)
     if (todayCount >= DAILY_PRESCRIPT_LIMIT) return
 
+    const award = outcome === 'success' ? (TRUST_AWARD[p.difficulty] ?? 0) : 0
+    const penalty = Number.isFinite(options.penalty) ? Math.max(0, options.penalty) : 0
+    const trustAfter = Math.max(0, accumulatedTrust + award - penalty)
+    const { newRank: rankForNext } = calculateRank(trustAfter, currentRank)
+
     dispatch({
       type: 'act',
       outcome,
       prescript: p,
-      next: getRandomPresc(pool, p.id),
+      next: decoratePrescript(getRandomPresc(pool, p.id, rankForNext), now),
       now,
+      penalty,
+      timeout: !!options.timeout,
     })
   }
 
   const execute = () => act('success')
   const diverge = () => act('fail')
+  const timeoutDiverge = () => actWithOptions('fail', { timeout: true, penalty: TIMEOUT_DIVERGE_PENALTY })
 
   const setMode = (mode) => dispatch({ type: 'set-settings', patch: { mode } })
   const setMuted = (muted) => dispatch({ type: 'set-settings', patch: { muted } })
+  const setSfxVolume = (sfxVolume) => {
+    const next = Number(sfxVolume)
+    const clamped = Number.isFinite(next) ? Math.max(0, Math.min(1, next)) : DEFAULTS.settings.sfxVolume
+    dispatch({ type: 'set-settings', patch: { sfxVolume: clamped } })
+  }
   const setBgmMuted = (bgmMuted) => dispatch({ type: 'set-settings', patch: { bgmMuted: !!bgmMuted } })
   const setBgmVolume = (bgmVolume) => {
     const next = Number(bgmVolume)
@@ -181,7 +357,7 @@ export function useAppState() {
   function addCustomPrescript(text, difficulty) {
     const trimmed = `${text ?? ''}`.trim()
     if (!trimmed) return
-    const safeDifficulty = difficulty === 'Hard' ? 'Hard' : 'Easy'
+    const safeDifficulty = VALID_DIFFICULTIES.has(difficulty) ? difficulty : 'Easy'
     const id =
       (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function')
         ? `custom-${crypto.randomUUID()}`
@@ -264,9 +440,60 @@ export function useAppState() {
     ]
     dispatch({
       type: 'rehydrate',
-      data: { ...data, activePrescript: getRandomPresc(rehydratedPool, null) },
+      data: {
+        ...data,
+        activePrescript: decoratePrescript(getRandomPresc(rehydratedPool, null, data.currentRank)),
+      },
     })
   }
+
+  function concludeDay(source = 'manual', referenceTimestamp = Date.now()) {
+    const dayToConclude = dayKey(referenceTimestamp)
+    dispatch({
+      type: 'conclude-day',
+      day: dayToConclude,
+      source,
+      now: Date.now(),
+    })
+  }
+
+  useEffect(() => {
+    const now = new Date()
+    const nextMidnight = new Date(now)
+    nextMidnight.setHours(24, 0, 0, 0)
+    const delay = Math.max(1, nextMidnight.getTime() - now.getTime())
+    const timer = setTimeout(() => {
+      concludeDay('auto-midnight', Date.now() - 1)
+    }, delay)
+    return () => clearTimeout(timer)
+  }, [history.length])
+
+  useEffect(() => {
+    timeoutHandledPrescriptRef.current = null
+  }, [activePrescript?.id, activePrescript?.deadlineAt])
+
+  useEffect(() => {
+    if (!activePrescript?.timeSensitive || !Number.isFinite(activePrescript.deadlineAt)) {
+      return undefined
+    }
+
+    const remainingMs = activePrescript.deadlineAt - Date.now()
+    if (remainingMs <= 0) {
+      if (timeoutHandledPrescriptRef.current !== activePrescript.id) {
+        timeoutHandledPrescriptRef.current = activePrescript.id
+        timeoutDiverge()
+      }
+      return undefined
+    }
+
+    const timeoutId = setTimeout(() => {
+      if (timeoutHandledPrescriptRef.current === activePrescript.id) return
+      timeoutHandledPrescriptRef.current = activePrescript.id
+      timeoutDiverge()
+    }, remainingMs)
+
+    return () => clearTimeout(timeoutId)
+  }, [activePrescript?.id, activePrescript?.timeSensitive, activePrescript?.deadlineAt])
 
   return {
     // US-001
@@ -276,12 +503,20 @@ export function useAppState() {
     activePrescript,
     execute,
     diverge,
+    timeoutDiverge,
+    timeoutSignal: state.lastTimeoutAt,
+    concludeDay,
+    lastEvaluation: state.lastEvaluation,
+    distortionOpacity: effectiveDistortionOpacity,
+    liveDistortion,
+    distortionGlitchSignal: state.lastDistortionGlitchAt,
     // US-003
     history,
     // later-phase seams (exposed now, UI added later)
     settings,
     setMode,
     setMuted,
+    setSfxVolume,
     setBgmMuted,
     setBgmVolume,
     setSources,

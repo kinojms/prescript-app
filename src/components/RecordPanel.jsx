@@ -1,14 +1,51 @@
 /**
  * RecordPanel - history panel using Hermes palette tokens.
  */
-export default function RecordPanel({ history }) {
+export default function RecordPanel({ history, onConcludeDay, evaluation, liveDistortion }) {
   const entries = Array.isArray(history) ? history : []
+  const canConclude = typeof onConcludeDay === 'function'
+  const showLiveWarning = !!liveDistortion?.active
+  const showEvaluation = !!evaluation && !(evaluation.status === 'distorting' && entries.length === 0)
 
   return (
     <section className="hermes-surface p-4 transition-colors duration-300 border-t-2 hermes-border">
       <h2 className="font-mono text-xs uppercase tracking-widest hermes-muted mb-3 border-b hermes-border pb-2 transition-colors duration-300">
         Record of Orders
       </h2>
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <p className="font-mono text-[10px] uppercase tracking-[0.16em] hermes-muted">
+          Distortion Check
+        </p>
+        <button
+          type="button"
+          onClick={() => canConclude && onConcludeDay()}
+          disabled={!canConclude}
+          className="min-h-11 rounded border border-[rgb(var(--hermes-accent-rgb)/0.7)] px-3 font-mono text-xs uppercase tracking-widest text-[var(--hermes-accent)] disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          Conclude Day
+        </button>
+      </div>
+      {showEvaluation && (
+        <div
+          className={`mb-3 rounded border px-3 py-2 font-mono text-xs ${
+            evaluation.status === 'flawless'
+              ? 'border-emerald-500/70 text-emerald-700 dark:text-emerald-400'
+              : evaluation.status === 'stable'
+                ? 'border-[rgb(var(--hermes-accent-rgb)/0.7)] text-[var(--hermes-accent)]'
+                : 'border-rose-500/70 text-rose-700 dark:text-rose-400'
+          }`}
+        >
+          <p className="uppercase tracking-wide">{evaluation.message}</p>
+        </div>
+      )}
+      {showLiveWarning && (
+        <div className="mb-3 rounded border border-rose-500/70 bg-rose-950/20 px-3 py-2 font-mono text-xs text-rose-700 dark:text-rose-400">
+          <p className="uppercase tracking-wide">{liveDistortion.message}</p>
+          <p className="mt-1 text-[10px] uppercase tracking-[0.12em]">
+            Deviation count: {liveDistortion.failCount}
+          </p>
+        </div>
+      )}
 
       <div className="max-h-64 overflow-y-auto hermes-scrollbar pr-1">
         {entries.length === 0 ? (

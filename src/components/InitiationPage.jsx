@@ -63,60 +63,71 @@ export default function InitiationPage({ onComplete }) {
       className="fixed inset-0 z-50 flex flex-col items-center justify-center"
       style={{
         backgroundColor: '#000000',
-        animation: fadingOut
-          ? `initiation-fade-out ${fadeDuration} ease-in both`
-          : undefined,
       }}
     >
-      {/* Sigil */}
-      <img
-        src={`${import.meta.env.BASE_URL}images/The_Index_Logo.png`}
-        alt="Index Prescript"
-        className="mb-8 select-none"
+      <div
+        data-testid="initiation-content"
+        className="flex w-full max-w-full flex-col items-center justify-center"
         style={{
-          width: '12rem',
-          height: 'auto',
-          animation: `initiation-fade-in ${fadeInDuration} ease-out both`,
-          animationDelay: '0s',
-        }}
-        draggable="false"
-      />
-
-      {/* Doctrine quote */}
-      <p
-        className="mb-6 text-sm font-sans text-center px-8"
-        style={{
-          color: 'var(--hermes-base)',
-          animation: `initiation-fade-in ${fadeInDuration} ease-out both`,
-          animationDelay: '1s',
+          animation: fadingOut
+            ? `initiation-fade-out ${fadeDuration} ease-in both`
+            : undefined,
         }}
       >
-        The Will of the City flows through our hands.
-      </p>
+        {/* Sigil */}
+        <img
+          src={`${import.meta.env.BASE_URL}images/The_Index_Logo.png`}
+          alt="Index Prescript"
+          className="mb-8 select-none"
+          style={{
+            width: '12rem',
+            height: 'auto',
+            animation: `initiation-fade-in ${fadeInDuration} ease-out both`,
+            animationDelay: '0s',
+          }}
+          draggable="false"
+        />
 
-      {/* Cipher gate */}
-      <button
-        type="button"
-        className="font-mono text-sm tracking-widest cursor-pointer select-none"
-        style={{
-          color: 'var(--hermes-accent)',
-          animation: `initiation-fade-in ${fadeInDuration} ease-out both`,
-          animationDelay: '2.5s',
-          pointerEvents: cipherInteractive ? 'auto' : 'none',
-          background: 'none',
-          border: 'none',
-          padding: '0.5rem 1rem',
-        }}
-        onMouseEnter={reveal}
-        onMouseLeave={conceal}
-        onPointerDown={handlePointerDown}
-        onPointerUp={handlePointerUp}
-        onPointerCancel={handlePointerCancel}
-        onClick={handleClick}
-        aria-label="Click to join the Index."
-      >
-        {displayText}
-      </button>
+        {/* Doctrine quote */}
+        <p
+          className="mb-6 px-8 text-center font-sans text-base md:text-lg"
+          style={{
+            color: 'var(--hermes-base)',
+            animation: `initiation-fade-in ${fadeInDuration} ease-out both`,
+            animationDelay: '1s',
+          }}
+        >
+          The Will of the City flows through our hands.
+        </p>
+
+        {/* Cipher gate */}
+        <button
+          type="button"
+          className="cursor-pointer select-none font-mono text-base tracking-widest md:text-lg"
+          style={{
+            color: 'var(--hermes-accent)',
+            animation: `initiation-fade-in ${fadeInDuration} ease-out both`,
+            animationDelay: '2.5s',
+            pointerEvents: cipherInteractive ? 'auto' : 'none',
+            background: 'none',
+            border: 'none',
+            padding: '0.5rem 1rem',
+          }}
+          onMouseEnter={() => {
+            reveal()
+          }}
+          onMouseLeave={() => {
+            conceal()
+          }}
+          onPointerDown={handlePointerDown}
+          onPointerUp={handlePointerUp}
+          onPointerCancel={handlePointerCancel}
+          onClick={handleClick}
+          aria-label="Click to join the Index."
+        >
+          {displayText}
+        </button>
+      </div>
     </div>
   )
 }

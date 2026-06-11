@@ -8,14 +8,20 @@ function hasDuration(audio) {
   return !!audio && Number.isFinite(audio.duration) && audio.duration > 0
 }
 
-function createAudio(url) {
+function clampVolume(value) {
+  const next = Number(value)
+  if (!Number.isFinite(next)) return 1
+  return Math.max(0, Math.min(1, next))
+}
+
+function createAudio(url, volume = 1) {
   if (typeof Audio === 'undefined') return null
   const audio = new Audio(url)
-  audio.volume = 1
+  audio.volume = clampVolume(volume)
   return audio
 }
 
-export function useCipherDecodeAudio(prescript, audioEnabled = true) {
+export function useCipherDecodeAudio(prescript, audioEnabled = true, audioVolume = 1) {
   const target = prescript?.text ?? ''
   const [resolvedCount, setResolvedCount] = useState(0)
   const [displayText, setDisplayText] = useState(target)
@@ -106,7 +112,7 @@ export function useCipherDecodeAudio(prescript, audioEnabled = true) {
     }, SHUFFLE_FRAME_MS)
 
     if (audioEnabled) {
-      message1Ref.current = createAudio(message1Url)
+      message1Ref.current = createAudio(message1Url, audioVolume)
       if (message1Ref.current) {
         message1Ref.current.play().catch(() => {})
       }
@@ -133,12 +139,12 @@ export function useCipherDecodeAudio(prescript, audioEnabled = true) {
 
     const startMessage2Loop = () => {
       if (resolvedRef.current >= target.length) return
-      const probe = audioEnabled ? createAudio(message2Url) : null
+      const probe = audioEnabled ? createAudio(message2Url, audioVolume) : null
       waitForDuration(probe, (durationSec) => {
         const intervalMs = Math.max(100, (durationSec * 1000) - AUDIO_OVERLAP_OFFSET_MS || FALLBACK_LOOP_MS)
 
         const playMessage2 = () => {
-          const audio = audioEnabled ? createAudio(message2Url) : null
+          const audio = audioEnabled ? createAudio(message2Url, audioVolume) : null
           if (!audio) return
           runningMessage2Ref.current.push(audio)
           audio.addEventListener('ended', () => {
@@ -167,7 +173,7 @@ export function useCipherDecodeAudio(prescript, audioEnabled = true) {
     return () => {
       stopAllAudioAndTimers()
     }
-  }, [audioEnabled, prescript?.id, message1Url, message2Url, target])
+  }, [audioEnabled, audioVolume, prescript?.id, message1Url, message2Url, target])
 
   return {
     displayText,

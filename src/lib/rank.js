@@ -1,12 +1,12 @@
 // Ordered ladder. `threshold` = trust needed to promote FROM this rank.
 // The final rank has threshold = Infinity (cannot promote further).
 export const RANKS = Object.freeze([
-  { name: 'Proselyte',          threshold: 100 },
-  { name: 'Proxy',              threshold: 250 },
-  { name: "The Oracle's Proxy", threshold: Infinity },
+  { name: 'Proselyte',          threshold: 150 },
+  { name: 'Proxy',              threshold: 300 },
+  { name: 'Grace of the Prescript', threshold: Infinity },
 ])
 
-export const TRUST_AWARD = Object.freeze({ Easy: 5, Hard: 10 })
+export const TRUST_AWARD = Object.freeze({ Easy: 1, Medium: 5, Hard: 10 })
 
 /**
  * Pure promotion calc.

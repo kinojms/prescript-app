@@ -9,8 +9,18 @@ function randomChar() {
   return CHARS[Math.floor(Math.random() * CHARS.length)]
 }
 
-export default function CipherBackground() {
+export default function CipherBackground({ distortionOpacity = 0, distortionGlitchSignal = 0 }) {
   const canvasRef = useRef(null)
+  const distortionOpacityRef = useRef(distortionOpacity)
+  const distortionGlitchSignalRef = useRef(distortionGlitchSignal)
+
+  useEffect(() => {
+    distortionOpacityRef.current = Math.max(0, Math.min(1, Number(distortionOpacity) || 0))
+  }, [distortionOpacity])
+
+  useEffect(() => {
+    distortionGlitchSignalRef.current = distortionGlitchSignal
+  }, [distortionGlitchSignal])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -23,6 +33,10 @@ export default function CipherBackground() {
     let rows = 0
     let rafId = null
     let lastFrameTime = 0
+    let glitchUntil = 0
+    let lastGlitchSignal = 0
+    const distortionImage = new Image()
+    distortionImage.src = `${import.meta.env.BASE_URL}images/distort-carmen.png`
 
     function glyphColor() {
       return 'rgba(134, 186, 218, 0.5)'
@@ -52,6 +66,29 @@ export default function CipherBackground() {
       const h = window.innerHeight
 
       ctx.clearRect(0, 0, w, h)
+      const now = Date.now()
+      const glitching = now < glitchUntil
+      const distortionStrength = distortionOpacityRef.current
+      if (!glitching && distortionStrength > 0 && distortionImage.complete) {
+        ctx.save()
+        ctx.globalAlpha = distortionStrength
+        ctx.drawImage(distortionImage, 0, 0, w, h)
+        ctx.restore()
+      }
+
+      if (glitching) {
+        const blocks = Math.max(10, Math.floor((w * h) / 25000))
+        for (let i = 0; i < blocks; i++) {
+          const x = Math.random() * w
+          const y = Math.random() * h
+          const bw = 20 + (Math.random() * 80)
+          const bh = 3 + (Math.random() * 25)
+          const alpha = 0.2 + (Math.random() * 0.4)
+          const tone = Math.random() > 0.5 ? '134, 186, 218' : '255, 255, 255'
+          ctx.fillStyle = `rgba(${tone}, ${alpha})`
+          ctx.fillRect(x, y, bw, bh)
+        }
+      }
 
       ctx.font = `${CELL_SIZE - 2}px monospace`
       ctx.textBaseline = 'top'
@@ -83,6 +120,10 @@ export default function CipherBackground() {
       rafId = requestAnimationFrame(tick)
       if (timestamp - lastFrameTime >= FRAME_INTERVAL) {
         lastFrameTime = timestamp
+        if (distortionGlitchSignalRef.current > lastGlitchSignal) {
+          lastGlitchSignal = distortionGlitchSignalRef.current
+          glitchUntil = Date.now() + 900
+        }
         churn()
         draw()
       }

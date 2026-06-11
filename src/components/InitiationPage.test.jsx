@@ -150,7 +150,7 @@ describe('InitiationPage — cipher gate (US-2)', () => {
     act(() => { vi.advanceTimersByTime(2500) })
     const btn = getCipherButton()
     act(() => { fireEvent.mouseEnter(btn) })
-    act(() => { vi.runAllTimers() })
+    act(() => { vi.advanceTimersByTime(5000) })
     expect(btn.textContent).toBe('Click to join the Index.')
   })
 
@@ -159,9 +159,9 @@ describe('InitiationPage — cipher gate (US-2)', () => {
     act(() => { vi.advanceTimersByTime(2500) })
     const btn = getCipherButton()
     act(() => { fireEvent.mouseEnter(btn) })
-    act(() => { vi.runAllTimers() })
+    act(() => { vi.advanceTimersByTime(5000) })
     act(() => { fireEvent.mouseLeave(btn) })
-    act(() => { vi.runAllTimers() })
+    act(() => { vi.advanceTimersByTime(5000) })
     expect(btn.textContent).not.toBe('Click to join the Index.')
   })
 
@@ -170,7 +170,7 @@ describe('InitiationPage — cipher gate (US-2)', () => {
     act(() => { vi.advanceTimersByTime(2500) })
     const btn = getCipherButton()
     act(() => { fireEvent.pointerDown(btn, { pointerType: 'touch' }) })
-    act(() => { vi.runAllTimers() })
+    act(() => { vi.advanceTimersByTime(5000) })
     expect(btn.textContent).toBe('Click to join the Index.')
   })
 
@@ -179,9 +179,9 @@ describe('InitiationPage — cipher gate (US-2)', () => {
     act(() => { vi.advanceTimersByTime(2500) })
     const btn = getCipherButton()
     act(() => { fireEvent.pointerDown(btn, { pointerType: 'touch' }) })
-    act(() => { vi.runAllTimers() })
+    act(() => { vi.advanceTimersByTime(5000) })
     act(() => { fireEvent.pointerUp(btn, { pointerType: 'touch' }) })
-    act(() => { vi.runAllTimers() })
+    act(() => { vi.advanceTimersByTime(5000) })
     expect(btn.textContent).not.toBe('Click to join the Index.')
   })
 
@@ -190,9 +190,9 @@ describe('InitiationPage — cipher gate (US-2)', () => {
     act(() => { vi.advanceTimersByTime(2500) })
     const btn = getCipherButton()
     act(() => { fireEvent.pointerDown(btn, { pointerType: 'touch' }) })
-    act(() => { vi.runAllTimers() })
+    act(() => { vi.advanceTimersByTime(5000) })
     act(() => { fireEvent.pointerCancel(btn, { pointerType: 'touch' }) })
-    act(() => { vi.runAllTimers() })
+    act(() => { vi.advanceTimersByTime(5000) })
     expect(btn.textContent).not.toBe('Click to join the Index.')
   })
 
@@ -200,7 +200,7 @@ describe('InitiationPage — cipher gate (US-2)', () => {
     const { onComplete } = renderPage()
     const btn = getCipherButton()
     act(() => { fireEvent.click(btn) })
-    act(() => { vi.runAllTimers() })
+    act(() => { vi.advanceTimersByTime(5000) })
     expect(onComplete).not.toHaveBeenCalled()
   })
 })
@@ -215,7 +215,7 @@ describe('InitiationPage — click-through (US-3)', () => {
     act(() => { vi.advanceTimersByTime(2500) })
     const btn = getCipherButton()
     act(() => { fireEvent.click(btn) })
-    act(() => { vi.runAllTimers() })
+    act(() => { vi.advanceTimersByTime(5000) })
     expect(onComplete).toHaveBeenCalledTimes(1)
   })
 
@@ -228,7 +228,7 @@ describe('InitiationPage — click-through (US-3)', () => {
       fireEvent.click(btn)
       fireEvent.click(btn)
     })
-    act(() => { vi.runAllTimers() })
+    act(() => { vi.advanceTimersByTime(5000) })
     expect(onComplete).toHaveBeenCalledTimes(1)
   })
 
@@ -241,7 +241,7 @@ describe('InitiationPage — click-through (US-3)', () => {
     act(() => { vi.advanceTimersByTime(90) }) // partial resolve
     // Click without full resolve
     act(() => { fireEvent.click(btn) })
-    act(() => { vi.runAllTimers() })
+    act(() => { vi.advanceTimersByTime(5000) })
     expect(onComplete).toHaveBeenCalledTimes(1)
   })
 
@@ -250,9 +250,8 @@ describe('InitiationPage — click-through (US-3)', () => {
     act(() => { vi.advanceTimersByTime(2500) })
     const btn = getCipherButton()
     act(() => { fireEvent.click(btn) })
-    // Root should have fade-out animation applied
-    const root = document.querySelector('[class*="fixed"][class*="inset-0"][class*="z-50"]')
-    expect(root.style.animation).toContain('initiation-fade-out')
+    const content = screen.getByTestId('initiation-content')
+    expect(content.style.animation).toContain('initiation-fade-out')
   })
 })
 
@@ -316,7 +315,7 @@ describe('InitiationPage — prefers-reduced-motion', () => {
     const { onComplete } = renderPage()
     act(() => { vi.advanceTimersByTime(2500) })
     act(() => { fireEvent.click(getCipherButton()) })
-    act(() => { vi.runAllTimers() })
+    act(() => { vi.advanceTimersByTime(5000) })
     expect(onComplete).toHaveBeenCalledTimes(1)
   })
 })
@@ -362,3 +361,4 @@ describe('InitiationPage — import isolation', () => {
     }
   })
 })
+

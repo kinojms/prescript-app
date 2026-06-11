@@ -91,6 +91,35 @@ describe('RecordPanel — entry rendering', () => {
     const item = screen.getByRole('listitem')
     expect(item.className).toContain('rose')
   })
+
+  it('shows live distortion warning when active', () => {
+    render(
+      <RecordPanel
+        history={[failEntry]}
+        liveDistortion={{
+          active: true,
+          failCount: 5,
+          message: 'Distortion Warning: Deviation levels critical. The Proxies have been dispatched.',
+        }}
+      />
+    )
+    expect(screen.getByText(/distortion warning/i)).toBeTruthy()
+    expect(screen.getByText(/deviation count: 5/i)).toBeTruthy()
+  })
+
+  it('hides distorting evaluation warning once history is cleared after conclude day', () => {
+    render(
+      <RecordPanel
+        history={[]}
+        evaluation={{
+          status: 'distorting',
+          message: 'Distortion Warning: Deviation levels critical. The Proxies have been dispatched.',
+        }}
+      />
+    )
+
+    expect(screen.queryByText(/distortion warning/i)).toBeNull()
+  })
 })
 
 // ---------------------------------------------------------------------------

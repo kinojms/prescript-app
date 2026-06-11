@@ -31,7 +31,7 @@ describe('RankHeader - text rendering', () => {
   })
 
   it('renders "Max Rank" text when at the final rank', () => {
-    renderRankHeader({ rank: "The Oracle's Proxy", trust: 999 })
+    renderRankHeader({ rank: 'Grace of the Prescript', trust: 999 })
     expect(screen.getByText(/max rank/i)).toBeTruthy()
   })
 
@@ -41,7 +41,7 @@ describe('RankHeader - text rendering', () => {
   })
 
   it('does not show a progress bar at max rank', () => {
-    renderRankHeader({ rank: "The Oracle's Proxy", trust: 999 })
+    renderRankHeader({ rank: 'Grace of the Prescript', trust: 999 })
     const progressbars = document.querySelectorAll('[role="progressbar"]')
     expect(progressbars).toHaveLength(0)
   })

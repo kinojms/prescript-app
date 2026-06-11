@@ -6,23 +6,25 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  --hermes-base: #f3f1eb;
-  --hermes-accent: #86bada;
+  --hermes-base: #e5e2d9;
+  --hermes-accent: #689cb9;
   --hermes-black: #000000;
   --hermes-bg: var(--hermes-base);
-  --hermes-surface: #f3f1eb;
-  --hermes-panel: #e9e7e2;
-  --hermes-border: #86bada;
-  --hermes-text: #1f2d35;
-  --hermes-muted: #4b6878;
+  --hermes-surface: #d6d2c4;
+  --hermes-panel: #d0ccb9;
+  --hermes-border: #b0ac9c;
+  --hermes-text: #1a1d20;
+  --hermes-muted: #4d5154;
   --hermes-success: #3f7a5b;
   --hermes-danger: #8a4545;
-  --hermes-surface-rgb: 243 241 235;
-  --hermes-panel-rgb: 233 231 226;
-  --hermes-bg-rgb: 243 241 235;
+  --hermes-surface-rgb: 214 210 196;
+  --hermes-panel-rgb: 208 204 185;
+  --hermes-bg-rgb: 229 226 217;
+  --hermes-accent-rgb: 104 156 185;
 }
 
 .dark {
+  --hermes-accent: #86bada;
   --hermes-bg: var(--hermes-black);
   --hermes-surface: var(--hermes-black);
   --hermes-panel: var(--hermes-black);
@@ -34,11 +36,13 @@
   --hermes-surface-rgb: 0 0 0;
   --hermes-panel-rgb: 0 0 0;
   --hermes-bg-rgb: 0 0 0;
+  --hermes-accent-rgb: 134 186 218;
 }
 
 html,
 body {
-  background-color: var(--hermes-base);
+  background-color: var(--hermes-bg);
+  color: var(--hermes-text);
   font-family: 'Pixelify Sans', 'Courier New', monospace;
 }
 
@@ -71,24 +75,42 @@ body {
   }
   .hermes-scrollbar {
     scrollbar-width: thin;
-    scrollbar-color: rgb(134 186 218 / 0.75) rgb(134 186 218 / 0.2);
+    scrollbar-color: rgb(var(--hermes-accent-rgb) / 0.7) rgb(var(--hermes-accent-rgb) / 0.16);
   }
   .hermes-scrollbar::-webkit-scrollbar {
     width: 10px;
     height: 10px;
   }
   .hermes-scrollbar::-webkit-scrollbar-track {
-    background: rgb(134 186 218 / 0.16);
+    background: rgb(var(--hermes-accent-rgb) / 0.16);
     border-radius: 9999px;
   }
   .hermes-scrollbar::-webkit-scrollbar-thumb {
-    background: rgb(134 186 218 / 0.72);
+    background: rgb(var(--hermes-accent-rgb) / 0.7);
     border-radius: 9999px;
     border: 2px solid rgb(0 0 0 / 0);
     background-clip: padding-box;
   }
   .hermes-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: rgb(134 186 218 / 0.9);
+    background: rgb(var(--hermes-accent-rgb) / 0.85);
+  }
+
+  /* Enforce low-glare token palette inside settings drawer, even where legacy
+     utility classes still reference stone/amber color ramps. */
+  .hermes-settings [class*='bg-stone-'] {
+    background-color: rgb(var(--hermes-panel-rgb) / 0.86) !important;
+  }
+  .hermes-settings [class*='border-stone-'] {
+    border-color: var(--hermes-border) !important;
+  }
+  .hermes-settings [class*='text-stone-'] {
+    color: var(--hermes-text) !important;
+  }
+  .hermes-settings [class*='text-amber-'] {
+    color: var(--hermes-accent) !important;
+  }
+  .hermes-settings [class*='border-amber-'] {
+    border-color: rgb(var(--hermes-accent-rgb) / 0.6) !important;
   }
 }
 
