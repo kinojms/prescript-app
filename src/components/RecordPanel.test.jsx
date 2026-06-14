@@ -129,16 +129,16 @@ describe('RecordPanel — structure', () => {
     expect(container.querySelector('section')).toBeTruthy()
   })
 
-  it('scrollable container has max-h-64 class', () => {
+  it('scrollable container has flex-1 class', () => {
     const { container } = render(<RecordPanel history={[successEntry]} />)
-    const scrollable = container.querySelector('.max-h-64')
+    const scrollable = container.querySelector('.flex-1')
     expect(scrollable).toBeTruthy()
   })
 
-  it('scrollable container has overflow-y-auto class', () => {
+  it('list container does not have its own overflow-y-auto (App.jsx wrapper owns scrolling)', () => {
     const { container } = render(<RecordPanel history={[successEntry]} />)
-    const scrollable = container.querySelector('.overflow-y-auto')
-    expect(scrollable).toBeTruthy()
+    const listContainer = container.querySelector('.flex-1')
+    expect(listContainer?.classList.contains('overflow-y-auto')).toBe(false)
   })
 
   it('entries are in a <ul> list', () => {

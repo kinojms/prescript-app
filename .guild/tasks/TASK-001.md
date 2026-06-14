@@ -1,11 +1,10 @@
 ---
 id: TASK-001
-title: "Add Vite base path for GitHub Pages"
-agent: developer
+title: "Gather requirements for Mobile Responsiveness"
+agent: product-owner
 status: done
 requirement: REQ-001
-plan: PLAN-001
-plan-slice: "Task 1: Add Vite base path"
+plan: null
 depends-on: []
 priority: high
 created: 2026-06-14
@@ -13,25 +12,31 @@ created: 2026-06-14
 
 ## Objective
 
-Add `base: '/prescript-app/'` to `vite.config.js` so all built asset URLs are prefixed correctly for GitHub Pages sub-path hosting.
+Interview the user and gather comprehensive requirements for: Mobile Responsiveness
+
+Make the prescript-app fully responsive and usable on mobile devices.
 
 ## Context
 
 - Requirement: .guild/requirements/REQ-001.md
-- Plan: docs/superpowers/plans/2026-06-14-github-pages-deploy.md (Task 1)
-- Without this, the app loads a blank page on GitHub Pages because assets are requested from `/` instead of `/prescript-app/`
 
 ## Acceptance Criteria
 
-- [x] `base: '/prescript-app/'` added as first property in `defineConfig({})` in `vite.config.js`
-- [x] `npm run build` succeeds
-- [x] `dist/index.html` references `/prescript-app/assets/` paths
+- [x] Requirement document fully written with user stories
+- [x] Acceptance criteria defined for each story
+- [x] Edge cases identified
+- [x] Technical considerations documented
+- [x] Out of scope clearly defined
 
 ## Work Log
 
-### 2026-06-14 — developer
-- Added `base: '/prescript-app/'` as the first property inside `defineConfig({})` in `D:\Projects\prescript-app\vite.config.js`
-- Ran `npm run build` — succeeded in 538ms
-- Verified `dist/index.html` references `/prescript-app/assets/` for JS and CSS, and `/prescript-app/manifest.json`, `/prescript-app/icons/` for other assets
+### 2026-06-14 — product-owner
+- Interviewed user about mobile layout issues on HermesShell
+- Identified priority issue: shell too small / fails to fill portrait viewport height; secondary issue: landscape orientation stretching
+- Confirmed minimum supported width: 360px; gap size left to developer judgment
+- Created REQ-001 with 3 user stories (portrait fill, landscape fix, header buttons)
+- Key decisions: gap is tasteful/visual not numeric; scroll-in-shell treated as inferred assumption; header buttons captured as lower priority; desktop layout explicitly out of scope
 
 ## Follow-up Tasks
+
+- Plan Mobile Responsiveness implementation | agent: architect | priority: high

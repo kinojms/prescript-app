@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- REQ-001: Mobile Responsiveness
 - REQ-001: Mandatory Initiation Page
 - REQ-001: Phase 1 — Core State Management & Prescript Engine
 - REQ-002: Phase 2 — Hermes Device UI Shell & Styling

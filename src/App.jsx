@@ -256,20 +256,22 @@ function App() {
           onToggleBgmMute={toggleBgmMute}
           onOpenSettings={() => setIsSettingsOpen(true)}
         />
-        <PrescriptCard
-          prescript={activePrescript}
-          onExecute={execute}
-          onDiverge={diverge}
-          muted={settings.muted}
-          sfxVolume={settings.sfxVolume}
-          timeoutSignal={timeoutSignal}
-        />
-        <RecordPanel
-          history={history}
-          onConcludeDay={() => concludeDay('manual')}
-          evaluation={lastEvaluation}
-          liveDistortion={liveDistortion}
-        />
+        <div className="flex-1 overflow-y-auto min-h-0 flex flex-col">
+          <PrescriptCard
+            prescript={activePrescript}
+            onExecute={execute}
+            onDiverge={diverge}
+            muted={settings.muted}
+            sfxVolume={settings.sfxVolume}
+            timeoutSignal={timeoutSignal}
+          />
+          <RecordPanel
+            history={history}
+            onConcludeDay={() => concludeDay('manual')}
+            evaluation={lastEvaluation}
+            liveDistortion={liveDistortion}
+          />
+        </div>
         </HermesShell>
 
         <SettingsDrawer

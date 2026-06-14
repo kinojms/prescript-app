@@ -8,7 +8,7 @@ export default function RecordPanel({ history, onConcludeDay, evaluation, liveDi
   const showEvaluation = !!evaluation && !(evaluation.status === 'distorting' && entries.length === 0)
 
   return (
-    <section className="hermes-surface p-4 transition-colors duration-300 border-t-2 hermes-border">
+    <section className="hermes-surface p-4 transition-colors duration-300 border-t-2 hermes-border flex flex-col min-h-0">
       <h2 className="font-mono text-xs uppercase tracking-widest hermes-muted mb-3 border-b hermes-border pb-2 transition-colors duration-300">
         Record of Orders
       </h2>
@@ -47,7 +47,7 @@ export default function RecordPanel({ history, onConcludeDay, evaluation, liveDi
         </div>
       )}
 
-      <div className="max-h-64 overflow-y-auto hermes-scrollbar pr-1">
+      <div className="flex-1 min-h-0 hermes-scrollbar pr-1">
         {entries.length === 0 ? (
           <p className="font-mono text-xs hermes-muted italic py-2">No orders recorded.</p>
         ) : (

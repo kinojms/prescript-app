@@ -56,7 +56,7 @@ export default function RankHeader({
         <div className="flex items-center gap-2 flex-shrink-0">
           <button
             onClick={onToggleBgmMute}
-            className="min-h-11 rounded border-2 hermes-border hermes-surface px-3 hermes-text font-mono text-xs uppercase tracking-widest transition-colors duration-300 hover:opacity-85 active:opacity-80"
+            className="min-h-11 rounded border-2 hermes-border hermes-surface px-2 sm:px-3 hermes-text font-mono text-xs uppercase tracking-wider sm:tracking-widest transition-colors duration-300 hover:opacity-85 active:opacity-80"
             aria-label={bgmMuted ? 'Unmute BGM' : 'Mute BGM'}
             type="button"
           >
@@ -64,7 +64,7 @@ export default function RankHeader({
           </button>
           <button
             onClick={onOpenSettings}
-            className="min-h-11 rounded border-2 hermes-border hermes-surface px-3 hermes-text font-mono text-xs uppercase tracking-widest transition-colors duration-300 hover:opacity-85 active:opacity-80"
+            className="min-h-11 rounded border-2 hermes-border hermes-surface px-2 sm:px-3 hermes-text font-mono text-xs uppercase tracking-wider sm:tracking-widest transition-colors duration-300 hover:opacity-85 active:opacity-80"
             aria-label="Open settings"
             type="button"
           >
@@ -72,7 +72,7 @@ export default function RankHeader({
           </button>
           <button
             onClick={onToggleMode}
-            className="min-h-11 min-w-11 flex items-center justify-center rounded border-2 hermes-border hermes-surface px-3 hermes-text font-mono text-xs uppercase tracking-widest transition-colors duration-300 hover:opacity-85 active:opacity-80"
+            className="min-h-11 min-w-11 flex items-center justify-center rounded border-2 hermes-border hermes-surface px-2 sm:px-3 hermes-text font-mono text-xs uppercase tracking-wider sm:tracking-widest transition-colors duration-300 hover:opacity-85 active:opacity-80"
             aria-label={mode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
             type="button"
           >
