@@ -1,42 +1,37 @@
 ---
 id: TASK-001
-title: "Gather requirements for Prescript Difficulty and Scoring Overhaul"
-agent: product-owner
+title: "Add Vite base path for GitHub Pages"
+agent: developer
 status: done
 requirement: REQ-001
-plan: null
+plan: PLAN-001
+plan-slice: "Task 1: Add Vite base path"
 depends-on: []
 priority: high
-created: 2026-06-11
+created: 2026-06-14
 ---
 
 ## Objective
 
-Interview the user and gather comprehensive requirements for: Prescript Difficulty and Scoring Overhaul
-
-Update the task generation engine and the Proximate Trust (EXP) state logic to match exact payout tiers, expanded default prescript pools across Easy/Medium/Hard, and dynamic state/rendering adaptation for Execute scoring and source-toggle behavior.
+Add `base: '/prescript-app/'` to `vite.config.js` so all built asset URLs are prefixed correctly for GitHub Pages sub-path hosting.
 
 ## Context
 
 - Requirement: .guild/requirements/REQ-001.md
+- Plan: docs/superpowers/plans/2026-06-14-github-pages-deploy.md (Task 1)
+- Without this, the app loads a blank page on GitHub Pages because assets are requested from `/` instead of `/prescript-app/`
 
 ## Acceptance Criteria
 
-- [x] Requirement document fully written with user stories
-- [x] Acceptance criteria defined for each story
-- [x] Edge cases identified
-- [x] Technical considerations documented
-- [x] Out of scope clearly defined
+- [x] `base: '/prescript-app/'` added as first property in `defineConfig({})` in `vite.config.js`
+- [x] `npm run build` succeeds
+- [x] `dist/index.html` references `/prescript-app/assets/` paths
 
 ## Work Log
 
-### product-owner - 2026-06-11
-- Expanded REQ-001 from draft to implementation-ready requirement detail.
-- Captured explicit user stories and acceptance criteria for three-tier payout economy and dynamic difficulty handling.
-- Added edge-case rules for legacy data normalization, empty pools, and backup compatibility.
-- Added technical constraints for single-source payout constants and test coverage expectations.
-- Marked requirement status as `in-progress` (details complete, implementation pending).
+### 2026-06-14 — developer
+- Added `base: '/prescript-app/'` as the first property inside `defineConfig({})` in `D:\Projects\prescript-app\vite.config.js`
+- Ran `npm run build` — succeeded in 538ms
+- Verified `dist/index.html` references `/prescript-app/assets/` for JS and CSS, and `/prescript-app/manifest.json`, `/prescript-app/icons/` for other assets
 
 ## Follow-up Tasks
-
-- Plan Prescript Difficulty and Scoring Overhaul implementation | agent: architect | priority: high

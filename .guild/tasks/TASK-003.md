@@ -1,42 +1,40 @@
 ---
 id: TASK-003
-title: "Gather requirements for Daily Evaluation"
-agent: product-owner
+title: "Create GitHub Actions deployment workflow"
+agent: developer
 status: done
-requirement: REQ-003
-plan: null
+requirement: REQ-001
+plan: PLAN-001
+plan-slice: "Task 3: Create GitHub Actions deployment workflow"
 depends-on: []
 priority: high
-created: 2026-06-11
+created: 2026-06-14
 ---
 
 ## Objective
 
-Interview the user and gather comprehensive requirements for: Daily Evaluation
-
-Implement Distortion Check evaluation flow (midnight and manual conclude-day trigger), thematic outcome states, selective daily reset behavior, and distortion-based background/opacity logic.
+Create `.github/workflows/deploy.yml` using GitHub's official Pages deployment actions (`actions/upload-pages-artifact@v3` and `actions/deploy-pages@v4`) to automatically build and deploy on every push to `master`.
 
 ## Context
 
-- Requirement: .guild/requirements/REQ-003.md
+- Requirement: .guild/requirements/REQ-001.md
+- Plan: docs/superpowers/plans/2026-06-14-github-pages-deploy.md (Task 3)
+- Uses two-job pattern: `build` (checkout → install → build → upload artifact) and `deploy` (publish artifact via Pages API)
+- After pushing, the user must manually set Settings → Pages → Source → "GitHub Actions" in the GitHub repo UI (one-time step)
 
 ## Acceptance Criteria
 
-- [x] Requirement document fully written with user stories
-- [x] Acceptance criteria defined for each story
-- [x] Edge cases identified
-- [x] Technical considerations documented
-- [x] Out of scope clearly defined
+- [x] `.github/workflows/deploy.yml` created with correct content
+- [x] YAML is valid (no syntax errors)
+- [ ] Workflow pushed to `master` and visible in GitHub Actions tab
 
 ## Work Log
 
-### product-owner - 2026-06-11
-- Expanded REQ-003 into a concrete Distortion Check requirement with trigger paths, threshold outcomes, and reset boundaries.
-- Captured strict preservation constraints (total trust and custom prescripts remain untouched).
-- Added distortion overlay rules with opacity scaling tied to failed prescript count.
-- Documented technical and edge-case expectations for day-boundary handling and idempotent conclude-day behavior.
-- Marked requirement status as `in-progress`.
+### 2026-06-14 — developer
+- Created `.github/workflows/` directory (did not previously exist)
+- Created `.github/workflows/deploy.yml` with the two-job pattern: `build` (checkout → install → build → upload artifact) and `deploy` (publish via Pages API)
+- Used `actions/upload-pages-artifact@v3` and `actions/deploy-pages@v4` as specified
+- Workflow triggers on push to `master`
+- Note: User must still set Settings → Pages → Source → "GitHub Actions" in GitHub repo UI (one-time manual step)
 
 ## Follow-up Tasks
-
-- Plan Daily Evaluation implementation | agent: architect | priority: high

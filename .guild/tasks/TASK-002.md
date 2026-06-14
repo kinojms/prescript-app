@@ -1,42 +1,39 @@
 ---
 id: TASK-002
-title: "Gather requirements for Deadline Mechanic"
-agent: product-owner
+title: "Update PWA manifest paths for GitHub Pages"
+agent: developer
 status: done
-requirement: REQ-002
-plan: null
+requirement: REQ-001
+plan: PLAN-001
+plan-slice: "Task 2: Update PWA manifest paths"
 depends-on: []
 priority: high
-created: 2026-06-11
+created: 2026-06-14
 ---
 
 ## Objective
 
-Interview the user and gather comprehensive requirements for: Deadline Mechanic
-
-Add an optional time-sensitive directive mechanic for Medium/Hard prescripts with randomized countdown windows, timeout auto-diverge behavior, audio breakdown effect, and a Proximate Trust penalty.
+Update `public/manifest.json` so that `start_url`, `scope`, and all icon `src` paths use the `/prescript-app/` prefix required for GitHub Pages sub-path hosting.
 
 ## Context
 
-- Requirement: .guild/requirements/REQ-002.md
+- Requirement: .guild/requirements/REQ-001.md
+- Plan: docs/superpowers/plans/2026-06-14-github-pages-deploy.md (Task 2)
+- Vite does NOT rewrite files in `public/`, so absolute paths must be updated manually
+- Incorrect `start_url`/`scope` breaks PWA install prompts and service worker scoping
 
 ## Acceptance Criteria
 
-- [x] Requirement document fully written with user stories
-- [x] Acceptance criteria defined for each story
-- [x] Edge cases identified
-- [x] Technical considerations documented
-- [x] Out of scope clearly defined
+- [x] `start_url` is `"/prescript-app/"`
+- [x] `scope` is `"/prescript-app/"`
+- [x] All three icon `src` values are prefixed with `/prescript-app/`
+- [x] `npm run build` succeeds and `dist/manifest.json` contains the correct values
 
 ## Work Log
 
-### product-owner - 2026-06-11
-- Expanded REQ-002 with full user stories for time-sensitive directives.
-- Defined acceptance criteria for timeout behavior, penalty enforcement, audio/visual feedback, and deterministic timer logic.
-- Documented edge cases for boundary clicks, throttled tabs, reload behavior, and mute interactions.
-- Added technical guidance for deadline modeling and interval lifecycle cleanup.
-- Marked requirement status as `in-progress`.
+### 2026-06-14 — developer
+- Updated `public/manifest.json`: set `start_url` and `scope` to `/prescript-app/`, prefixed all three icon `src` paths with `/prescript-app/`
+- Confirmed `dist/manifest.json` contains the correct values after `npm run build`
+- Build failure on first attempt was a transient Windows file-lock on `public/audio/.gitkeep`; second run succeeded cleanly
 
 ## Follow-up Tasks
-
-- Plan Deadline Mechanic implementation | agent: architect | priority: high
